@@ -18,6 +18,15 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        middle_name:{
+             type: String
+
+        },
+         status:{
+             type: Number,
+             default:1
+
+        },
 
           email: {
             type: String,

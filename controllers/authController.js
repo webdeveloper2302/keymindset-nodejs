@@ -150,7 +150,194 @@ const login = async (req, res) => {
     }
 };
 
+const addAdmin = async (req, res) => {
+    try {
+        // Only Super Admin can create Admin
+        // if (req.user.role !== 1) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: "Only Super Admin can add Admin"
+        //     });
+        // }
+
+        const {
+            first_name,
+            last_name,
+            middle_name,
+            email,
+            mobile,
+            password
+        } = req.body;
+
+        if (!first_name || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "First name, email and password are required"
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already registered"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const admin = await User.create({
+            first_name,
+            last_name,
+            middle_name,
+            email,
+            mobile,
+            password: hashedPassword,
+            role: 2
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Admin added successfully",
+            data: {
+                id: admin._id,
+                first_name: admin.first_name,
+                last_name: admin.last_name,
+                middle_name:admin.middle_name,
+                mobile:admin.mobile,
+                email: admin.email,
+                role: admin.role
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+const addUser = async (req, res) => {
+    try {
+        // Only Super Admin can create Admin
+        // if (req.user.role !== 1) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: "Only Super Admin can add Admin"
+        //     });
+        // }
+
+        const {
+            first_name,
+            last_name,
+            middle_name,
+            email,
+            mobile,
+            password
+        } = req.body;
+
+        if (!first_name || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "First name, email and password are required"
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already registered"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const admin = await User.create({
+            first_name,
+            last_name,
+            middle_name,
+            email,
+            mobile,
+            password: hashedPassword,
+            role: 3
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "User added successfully",
+            data: {
+                id: admin._id,
+                first_name: admin.first_name,
+                last_name: admin.last_name,
+                middle_name:admin.middle_name,
+                mobile:admin.mobile,
+                email: admin.email,
+                role: admin.role
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const listUsers = async (req, res) => {
+    try {
+        const users = await User.find(
+            { role: 2 },
+            {
+                password: 0
+            }
+        ).sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            message: "User list fetched successfully",
+            data: users
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+const listUsers1 = async (req, res) => {
+    try {
+        const users = await User.find(
+            { role: 3 },
+            {
+                password: 0
+            }
+        ).sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            message: "User list fetched successfully",
+            data: users
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
-      login
+      login,
+      addAdmin,
+      addUser,
+      listUsers,
+      listUsers1
 };
