@@ -365,11 +365,127 @@ const listUsers1 = async (req, res) => {
     }
 };
 
+const approveAdminRequest = async (req, res) => {
+    try {
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can approve requests"
+            });
+        }
+
+        const { requestId } = req.params;
+
+        const request = await AdminRequest.findOne({
+            _id: requestId,
+            status: "pending"
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: "Pending admin request not found"
+            });
+        }
+
+        const admin = await User.findById(request.admin_id);
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
+
+        // Activate Admin
+        admin.status = "active";
+        await admin.save();
+
+        // Update request
+        request.status = "approved";
+        request.approved_by = req.user.id;
+        request.approved_at = new Date();
+
+        await request.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin request approved successfully",
+            data: {
+                admin_id: admin._id,
+                email: admin.email,
+                status: admin.status,
+                request_status: request.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const getAdminRequests = async (req, res) => {
+    try {
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can view admin requests"
+            });
+        }
+
+        const requests = await AdminRequest.find({
+            status: "pending"
+        })
+        .populate(
+            "admin_id",
+            "first_name last_name email role status"
+        )
+        .populate(
+            "requested_by",
+            "first_name last_name email"
+        )
+        .sort({ createdAt: -1 });
+
+
+          // Total pending requests
+        const totalRequests = await AdminRequest.countDocuments({
+            status: "pending"
+        });
+
+        // Unread pending requests
+        const unreadRequests = await AdminRequest.countDocuments({
+            status: "pending",
+            is_read: false
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin requests fetched successfully",
+             count: {
+                total: totalRequests,
+                unread: unreadRequests
+            },
+            data: requests
+           
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
       login,
       addAdmin,
       addUser,
       listUsers,
-      listUsers1
+      listUsers1,
+      approveAdminRequest,
+      getAdminRequests
 };

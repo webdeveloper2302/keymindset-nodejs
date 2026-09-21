@@ -25,6 +25,11 @@ const adminRequestSchema = new mongoose.Schema(
             default: "pending"
         },
 
+            is_read: {
+        type: Boolean,
+        default: false
+        },
+
         approved_by: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
