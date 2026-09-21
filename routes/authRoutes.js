@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { register, login , addAdmin, addUser, listUsers, listUsers1,getAdminRequests} = require("../controllers/authController");
+const { register, login , addAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", register);
@@ -38,6 +38,28 @@ router.get(
 );
 
 
+router.put(
+    "/admin-requests/:requestId/approve",
+    authMiddleware,
+    approveAdminRequest
+);
+
+router.put(
+    "/admin-requests/:requestId/read",
+    authMiddleware,
+    markAdminRequestAsRead
+);
+
+router.put(
+    "/admin-requests/:requestId/reject",
+    authMiddleware,
+    rejectAdminRequest
+);
+router.put(
+    "/admins/:adminId/deactivate",
+    authMiddleware,
+    deactivateAdmin
+);
 
 
 

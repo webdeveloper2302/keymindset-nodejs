@@ -479,6 +479,159 @@ const getAdminRequests = async (req, res) => {
     }
 };
 
+const rejectAdminRequest = async (req, res) => {
+    try {
+        // Only Super Admin
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can reject requests"
+            });
+        }
+
+        const { requestId } = req.params;
+
+        const request = await AdminRequest.findOne({
+            _id: requestId,
+            status: "pending"
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: "Pending admin request not found"
+            });
+        }
+
+        const admin = await User.findById(request.admin_id);
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
+
+        // Keep admin inactive after rejection
+        admin.status = "deactivate";
+        await admin.save();
+
+        // Update request
+        request.status = "rejected";
+        request.rejected_by = req.user.id;
+        request.rejected_at = new Date();
+
+        // Notification has been handled/read
+        request.is_read = true;
+
+        await request.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin request rejected successfully",
+            data: {
+                admin_id: admin._id,
+                email: admin.email,
+                status: admin.status,
+                request_status: request.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const markAdminRequestAsRead = async (req, res) => {
+    try {
+        // Only Super Admin
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can read admin requests"
+            });
+        }
+
+        const { requestId } = req.params;
+
+        const request = await AdminRequest.findOne({
+            _id: requestId,
+            status: "pending"
+        });
+
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: "Pending admin request not found"
+            });
+        }
+
+        request.is_read = true;
+        await request.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin request marked as read",
+            data: {
+                request_id: request._id,
+                is_read: request.is_read
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const deactivateAdmin = async (req, res) => {
+    try {
+        // Only Super Admin can deactivate admin
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can deactivate admin"
+            });
+        }
+
+        const { adminId } = req.params;
+
+        const admin = await User.findOne({
+            _id: adminId
+        });
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
+
+        // Update status
+        admin.status = "deactivate";
+        await admin.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin deactivated successfully",
+            data: {
+                admin_id: admin._id,
+                email: admin.email,
+                status: admin.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
       login,
@@ -487,5 +640,8 @@ module.exports = {
       listUsers,
       listUsers1,
       approveAdminRequest,
-      getAdminRequests
+      getAdminRequests,
+      rejectAdminRequest,
+      deactivateAdmin,
+      markAdminRequestAsRead 
 };
