@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const AdminRequest = require("../models/AdminRequest");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -152,6 +153,15 @@ const login = async (req, res) => {
 
 const addAdmin = async (req, res) => {
     try {
+
+        // Only Super Admin and Admin can add Admin
+        if (![1, 2].includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not allowed to add Admin"
+            });
+        }
+
         // Only Super Admin can create Admin
         // if (req.user.role !== 1) {
         //     return res.status(403).json({
@@ -187,6 +197,13 @@ const addAdmin = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Super Admin → active
+        // Admin → pending
+        const status = req.user.role === 1
+            ? "active"
+            : "pending";
+
+
         const admin = await User.create({
             first_name,
             last_name,
@@ -194,12 +211,26 @@ const addAdmin = async (req, res) => {
             email,
             mobile,
             password: hashedPassword,
-            role: 2
+            role: 2,
+            status: status
         });
 
+           // If Admin creates Admin,
+        // create approval request for Super Admin
+        if (req.user.role === 2) {
+
+            await AdminRequest.create({
+                admin_id: admin._id,
+                requested_by: req.user.id,
+                request_type: "admin_creation",
+                status: "pending"
+            });
+        }
         return res.status(201).json({
             success: true,
-            message: "Admin added successfully",
+               message: req.user.role === 1
+                ? "Admin added successfully"
+                : "Admin request sent to Super Admin for approval",
             data: {
                 id: admin._id,
                 first_name: admin.first_name,
@@ -207,7 +238,8 @@ const addAdmin = async (req, res) => {
                 middle_name:admin.middle_name,
                 mobile:admin.mobile,
                 email: admin.email,
-                role: admin.role
+                role: admin.role,
+                status: admin.status
             }
         });
 
@@ -298,7 +330,7 @@ const listUsers = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "User list fetched successfully",
+            message: "Admin list fetched successfully",
             data: users
         });
 
