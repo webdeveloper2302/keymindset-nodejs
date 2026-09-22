@@ -93,6 +93,14 @@ const login = async (req, res) => {
         //     });
         // }
 
+           // Check account status
+        if (user.status !== "active") {
+            return res.status(403).json({
+                success: false,
+                message: `Account is ${user.status}`
+            });
+        }
+
         // Check password
         const isPasswordCorrect = await bcrypt.compare(
             password,
