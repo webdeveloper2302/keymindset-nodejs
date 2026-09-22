@@ -296,6 +296,11 @@ const addUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+         // Super Admin → active
+        // Admin → pending
+        const status = "active";
+
+
         const admin = await User.create({
             first_name,
             last_name,
@@ -303,7 +308,8 @@ const addUser = async (req, res) => {
             email,
             mobile,
             password: hashedPassword,
-            role: 3
+            role: 3,
+            status: status
         });
 
         return res.status(201).json({
@@ -701,7 +707,7 @@ const editAdmin = async (req, res) => {
         const {
             first_name,
             last_name,
-            email,
+            middle_name,
             mobile
         } = req.body;
 
@@ -719,30 +725,30 @@ const editAdmin = async (req, res) => {
         }
 
         // Validate required fields
-        if (!first_name || !email) {
+        if (!first_name) {
             return res.status(400).json({
                 success: false,
-                message: "First name and email are required"
+                message: "First name is required"
             });
         }
 
         // Check email already used by another user
         const existingUser = await User.findOne({
-            email: email.toLowerCase(),
+           
             _id: { $ne: id }
         });
 
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Email already registered"
-            });
-        }
+        // if (existingUser) {
+        //     return res.status(409).json({
+        //         success: false,
+        //         message: "Email already registered"
+        //     });
+        // }
 
         // Update details
         admin.first_name = first_name;
         admin.last_name = last_name || "";
-        admin.email = email.toLowerCase();
+        admin.middle_name = middle_name || "";
         admin.mobile = mobile || "";
 
         await admin.save();
@@ -754,10 +760,8 @@ const editAdmin = async (req, res) => {
                 id: admin._id,
                 first_name: admin.first_name,
                 last_name: admin.last_name,
-                email: admin.email,
                 mobile: admin.mobile,
-                role: admin.role,
-                status: admin.status
+                middle_name: admin.middle_name
             }
         });
 
