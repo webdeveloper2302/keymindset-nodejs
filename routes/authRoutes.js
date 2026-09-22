@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { register, login , addAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
+const { register, login , activateAdmin,addAdmin,editAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", register);
@@ -60,7 +60,16 @@ router.put(
     authMiddleware,
     deactivateAdmin
 );
-
+router.put(
+    "/admins/:adminId/activate",
+    authMiddleware,
+    activateAdmin
+);
+router.put(
+    "/admins/:id",
+    authMiddleware,
+    editAdmin
+);
 
 
 

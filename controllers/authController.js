@@ -595,6 +595,52 @@ const markAdminRequestAsRead = async (req, res) => {
         });
     }
 };
+
+
+const activateAdmin = async (req, res) => {
+    try {
+        // Only Super Admin can deactivate admin
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can deactivate admin"
+            });
+        }
+
+        const { adminId } = req.params;
+
+        const admin = await User.findOne({
+            _id: adminId
+        });
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
+
+        // Update status
+        admin.status = "active";
+        await admin.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin activated successfully",
+            data: {
+                admin_id: admin._id,
+                email: admin.email,
+                status: admin.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 const deactivateAdmin = async (req, res) => {
     try {
         // Only Super Admin can deactivate admin
@@ -640,6 +686,88 @@ const deactivateAdmin = async (req, res) => {
     }
 };
 
+const editAdmin = async (req, res) => {
+    try {
+        // Only Super Admin can edit Admin details
+        // if (req.user.role !== 1) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: "Only Super Admin can edit Admin details"
+        //     });
+        // }
+
+        const { id } = req.params;
+
+        const {
+            first_name,
+            last_name,
+            email,
+            mobile
+        } = req.body;
+
+        // Find Admin
+        const admin = await User.findOne({
+            _id: id,
+            role: 2
+        });
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
+
+        // Validate required fields
+        if (!first_name || !email) {
+            return res.status(400).json({
+                success: false,
+                message: "First name and email are required"
+            });
+        }
+
+        // Check email already used by another user
+        const existingUser = await User.findOne({
+            email: email.toLowerCase(),
+            _id: { $ne: id }
+        });
+
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already registered"
+            });
+        }
+
+        // Update details
+        admin.first_name = first_name;
+        admin.last_name = last_name || "";
+        admin.email = email.toLowerCase();
+        admin.mobile = mobile || "";
+
+        await admin.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin details updated successfully",
+            data: {
+                id: admin._id,
+                first_name: admin.first_name,
+                last_name: admin.last_name,
+                email: admin.email,
+                mobile: admin.mobile,
+                role: admin.role,
+                status: admin.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
       login,
@@ -651,5 +779,7 @@ module.exports = {
       getAdminRequests,
       rejectAdminRequest,
       deactivateAdmin,
-      markAdminRequestAsRead 
+      markAdminRequestAsRead,
+      editAdmin,
+      activateAdmin
 };
