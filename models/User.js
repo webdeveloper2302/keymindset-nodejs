@@ -40,7 +40,12 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: true
-        }
+        },
+            added_by: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+            },
     },
     {
         timestamps: true

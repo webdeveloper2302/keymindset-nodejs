@@ -220,7 +220,8 @@ const addAdmin = async (req, res) => {
             mobile,
             password: hashedPassword,
             role: 2,
-            status: status
+            status: status,
+             added_by: req.user.id
         });
 
            // If Admin creates Admin,
@@ -309,7 +310,8 @@ const addUser = async (req, res) => {
             mobile,
             password: hashedPassword,
             role: 3,
-            status: status
+            status: status,
+            added_by: req.user.id
         });
 
         return res.status(201).json({
