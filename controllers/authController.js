@@ -279,6 +279,17 @@ const addUser = async (req, res) => {
             password
         } = req.body;
 
+        const slug = [
+        first_name,
+        middle_name,
+        last_name
+        ]
+        .filter(Boolean)
+        .join("-")
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "")
+        .replace(/-+/g, "-");
+
         if (!first_name || !email || !password) {
             return res.status(400).json({
                 success: false,
@@ -312,6 +323,13 @@ const addUser = async (req, res) => {
             role: 3,
             status: status,
             added_by: req.user.id
+        });
+
+        const userDetails = await UserDetails.create({
+        user_id: admin._id,
+        url: slug,
+        refer_code: slug,
+        refer_by: null
         });
 
         return res.status(201).json({
