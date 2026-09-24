@@ -2,7 +2,10 @@ const express = require("express");
 
 const router = express.Router();
 
-const { register, login ,savePractitioner,updatePractitionerUrl, getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
+const {addCredential, uploadCredential,register, login ,savePractitioner,updatePractitionerUrl,
+     getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,
+     deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,
+     listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", register);
@@ -13,6 +16,12 @@ router.post(
     addAdmin
 );
 
+router.post(
+    "/practitioners/:practitioner_id/credentials",
+    authMiddleware,
+    uploadCredential.single("document"),
+    addCredential
+);
 router.post(
     "/add-user",
     authMiddleware,

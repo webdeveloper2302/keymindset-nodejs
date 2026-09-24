@@ -3,6 +3,10 @@ const UserDetails = require("../models/UserDetails");
 const AdminRequest = require("../models/AdminRequest");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const PractitionerCredential = require("../models/PractitionerCredential");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const register = async (req, res) => {
     try {
@@ -1058,6 +1062,193 @@ const savePractitioner = async (req, res) => {
 
     }
 };
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+
+        const uploadPath = path.join(
+            __dirname,
+            "../uploads/credentials"
+        );
+
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, {
+                recursive: true
+            });
+        }
+
+        cb(null, uploadPath);
+    },
+
+    filename: function (req, file, cb) {
+
+        const extension = path.extname(file.originalname);
+
+        const fileName =
+            Date.now() +
+            "-" +
+            Math.round(Math.random() * 1000000) +
+            extension;
+
+        cb(null, fileName);
+    }
+});
+
+const uploadCredential = multer({
+    storage: storage,
+
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+
+    fileFilter: function (req, file, cb) {
+
+        const allowedTypes = [
+            "application/pdf",
+            "image/jpeg",
+            "image/jpg",
+            "image/png"
+        ];
+
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(
+                new Error(
+                    "Only PDF, JPG, JPEG and PNG files are allowed"
+                )
+            );
+        }
+    }
+});
+const addCredential = async (req, res) => {
+    try {
+
+        const { practitioner_id } = req.params;
+
+        const {
+            credential_type,
+            credential_name
+        } = req.body;
+
+        // Check practitioner
+        const practitioner = await User.findById(
+            practitioner_id
+        );
+
+        if (!practitioner) {
+            return res.status(404).json({
+                success: false,
+                message: "Practitioner not found"
+            });
+        }
+
+        // Validate fields
+        if (!credential_type || !credential_name) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Credential type and credential name are required"
+            });
+        }
+
+        // Check file
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Please upload a certificate or credential document"
+            });
+        }
+
+        // Maximum 10 credentials
+        const credentialCount =
+            await PractitionerCredential.countDocuments({
+                practitioner_id: practitioner_id
+            });
+
+        if (credentialCount >= 10) {
+
+            // Delete uploaded file because limit reached
+            if (req.file.path && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Maximum 10 credentials are allowed"
+            });
+        }
+
+        // Document URL
+        const documentUrl =
+    `${req.protocol}://${req.get("host")}/uploads/credentials/${req.file.filename}`;
+        // const documentUrl =
+        //     `/uploads/credentials/${req.file.filename}`;
+
+        // ALWAYS pending
+        const credential =
+            await PractitionerCredential.create({
+
+                practitioner_id: practitioner_id,
+
+                credential_type: credential_type,
+
+                credential_name: credential_name,
+
+                document: documentUrl,
+
+                status: "pending",
+
+                uploaded_by: req.user.id
+            });
+
+        return res.status(201).json({
+
+            success: true,
+
+            message:
+                "Credential added successfully and sent for approval",
+
+            data: {
+                id: credential._id,
+                practitioner_id:
+                    credential.practitioner_id,
+
+                credential_type:
+                    credential.credential_type,
+
+                credential_name:
+                    credential.credential_name,
+
+                document:
+                    credential.document,
+
+                status:
+                    credential.status,
+
+                uploaded_by:
+                    credential.uploaded_by,
+
+                createdAt:
+                    credential.createdAt
+            }
+        });
+
+    } catch (error) {
+
+        // Delete uploaded file if database operation fails
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
       login,
@@ -1074,5 +1265,7 @@ module.exports = {
       activateAdmin,
       getUserDetails,
       updatePractitionerUrl,
-      savePractitioner
+      savePractitioner,
+      addCredential,
+      uploadCredential
 };
