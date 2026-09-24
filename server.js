@@ -4,11 +4,18 @@ const express = require("express");
 const connectDB = require("./config/database");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const path = require("path");
 
 
 const app = express();
 
 const cors = require('cors');
+
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"))
+);
+
 
 app.use(cors({
     origin: [
