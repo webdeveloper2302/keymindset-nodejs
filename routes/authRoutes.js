@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { register, login , activateAdmin,addAdmin,editAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
+const { register, login ,savePractitioner,updatePractitionerUrl, getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", register);
@@ -18,7 +18,11 @@ router.post(
     authMiddleware,
     addUser
 );
-
+router.put(
+    "/practitioners/:id",
+    authMiddleware,
+    savePractitioner
+);
 router.get(
     "/list-admin",
     authMiddleware,
@@ -70,7 +74,16 @@ router.put(
     authMiddleware,
     editAdmin
 );
-
+router.get(
+    "/users/:id/details",
+    authMiddleware,
+    getUserDetails
+);
+router.put(
+    "/users/:id/practitioner-url",
+    authMiddleware,
+    updatePractitionerUrl
+);
 
 
 module.exports = router;

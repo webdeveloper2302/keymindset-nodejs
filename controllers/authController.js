@@ -329,7 +329,7 @@ const addUser = async (req, res) => {
         const userDetails = await UserDetails.create({
         user_id: admin._id,
         url: slug,
-        refer_code: slug,
+        refer_code: null,
         refer_by: null
         });
 
@@ -451,6 +451,47 @@ const approveAdminRequest = async (req, res) => {
                 email: admin.email,
                 status: admin.status,
                 request_status: request.status
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const getUserDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find user
+        const user = await User.findById(
+            id,
+            { password: 0 }
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Find user details
+        const userDetails = await UserDetails.findOne({
+            user_id: id
+        }).populate(
+            "refer_by",
+            "first_name middle_name last_name email"
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "User details fetched successfully",
+            data: {
+                user: user,
+                details: userDetails
             }
         });
 
@@ -793,6 +834,230 @@ const editAdmin = async (req, res) => {
         });
     }
 };
+const updatePractitionerUrl = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { url } = req.body;
+
+        // Validate URL
+        if (!url || !url.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Practitioner URL is required"
+            });
+        }
+
+        // Clean URL
+        const cleanUrl = url
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "")
+            .replace(/-+/g, "-");
+
+        // Check user exists
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Check URL already exists
+        const existingUrl = await UserDetails.findOne({
+            url: cleanUrl,
+            user_id: { $ne: id }
+        });
+
+        if (existingUrl) {
+            return res.status(409).json({
+                success: false,
+                message: "Practitioner URL already exists"
+            });
+        }
+
+        // Update URL
+        const userDetails = await UserDetails.findOneAndUpdate(
+            { user_id: id },
+            {
+                $set: {
+                    url: cleanUrl
+                }
+            },
+            {
+                new: true,
+                upsert: true
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Practitioner URL updated successfully",
+            data: {
+                user_id: id,
+                url: userDetails.url
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+const savePractitioner = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const {
+            first_name,
+            middle_name,
+            last_name,
+            email,
+            mobile,
+            url,
+            refer_code,
+            refer_by
+        } = req.body;
+
+        // Find practitioner/user
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Practitioner not found"
+            });
+        }
+
+        // -----------------------------
+        // Validate required fields
+        // -----------------------------
+
+        if (!first_name || !last_name || !email || !mobile) {
+            return res.status(400).json({
+                success: false,
+                message: "First name, last name, email and mobile are required"
+            });
+        }
+
+        // -----------------------------
+        // Check email already exists
+        // -----------------------------
+
+        const existingEmail = await User.findOne({
+            email: email.toLowerCase(),
+            _id: { $ne: id }
+        });
+
+        if (existingEmail) {
+            return res.status(409).json({
+                success: false,
+                message: "Email already registered"
+            });
+        }
+
+        // -----------------------------
+        // Check practitioner URL
+        // -----------------------------
+
+        let cleanUrl = url;
+
+        if (url) {
+            cleanUrl = url
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, "")
+                .replace(/-+/g, "-");
+
+            const existingUrl = await UserDetails.findOne({
+                url: cleanUrl,
+                user_id: { $ne: id }
+            });
+
+            if (existingUrl) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Practitioner URL already exists"
+                });
+            }
+        }
+
+        // -----------------------------
+        // Update User
+        // -----------------------------
+
+        user.first_name = first_name;
+        user.middle_name = middle_name || "";
+        user.last_name = last_name;
+        user.email = email.toLowerCase();
+        user.mobile = mobile;
+
+        await user.save();
+
+        // -----------------------------
+        // Update User Details
+        // -----------------------------
+
+        const userDetails = await UserDetails.findOneAndUpdate(
+            {
+                user_id: id
+            },
+            {
+                $set: {
+                    url: cleanUrl || "",
+                    refer_code: refer_code || "",
+                    refer_by: refer_by || null
+                }
+            },
+            {
+                new: true,
+                upsert: true
+            }
+        );
+
+        // -----------------------------
+        // Response
+        // -----------------------------
+
+        return res.status(200).json({
+            success: true,
+            message: "Practitioner details updated successfully",
+
+            data: {
+                user: {
+                    id: user._id,
+                    first_name: user.first_name,
+                    middle_name: user.middle_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    mobile: user.mobile,
+                    role: user.role,
+                    status: user.status
+                },
+
+                details: {
+                    id: userDetails._id,
+                    url: userDetails.url,
+                    refer_code: userDetails.refer_code,
+                    refer_by: userDetails.refer_by
+                }
+            }
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+};
 module.exports = {
     register,
       login,
@@ -806,5 +1071,8 @@ module.exports = {
       deactivateAdmin,
       markAdminRequestAsRead,
       editAdmin,
-      activateAdmin
+      activateAdmin,
+      getUserDetails,
+      updatePractitionerUrl,
+      savePractitioner
 };
