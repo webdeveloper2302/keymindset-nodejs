@@ -1290,6 +1290,74 @@ const getCredentials = async (req, res) => {
         });
     }
 };
+const viewCredential = async (req, res) => {
+    try {
+        const { credential_id } = req.params;
+
+        const credential = await PractitionerCredential.findById(
+            credential_id
+        )
+            .populate(
+                "practitioner_id",
+                "first_name middle_name last_name email mobile"
+            )
+            .populate(
+                "uploaded_by",
+                "first_name middle_name last_name email"
+            )
+            .populate(
+                "approved_by",
+                "first_name middle_name last_name email"
+            );
+
+        if (!credential) {
+            return res.status(404).json({
+                success: false,
+                message: "Credential not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Credential details fetched successfully",
+            data: {
+                id: credential._id,
+
+                practitioner: credential.practitioner_id,
+
+                kind: credential.kind,
+
+                credential_name: credential.credential_name,
+
+                issuer: credential.issuer,
+
+                issued_at: credential.issued_at,
+
+                supporting_document: credential.document,
+
+                exclude_from_search:
+                    credential.exclude_from_search,
+
+                status: credential.status,
+
+                uploaded_by: credential.uploaded_by,
+
+                approved_by: credential.approved_by,
+
+                approved_at: credential.approved_at,
+
+                createdAt: credential.createdAt,
+                updatedAt: credential.updatedAt
+            }
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
       login,
@@ -1309,5 +1377,6 @@ module.exports = {
       savePractitioner,
       addCredential,
       uploadCredential,
-      getCredentials
+      getCredentials,
+      viewCredential
 };

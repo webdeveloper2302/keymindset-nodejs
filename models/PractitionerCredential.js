@@ -12,8 +12,7 @@ const practitionerCredentialSchema = new mongoose.Schema(
             type: String,
             enum: [
                 "License",
-                "Degree",
-                "Certification"
+                "Certificate"
             ],
             required: true
         },
@@ -22,6 +21,22 @@ const practitionerCredentialSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true
+        },
+            // Issuing organization/person
+        issuer: {
+            type: String,
+            trim: true,
+            default: ""
+        },    // Date credential was issued
+        issued_at: {
+            type: Date,
+            default: null
+        },
+
+        // Hide from search
+        exclude_from_search: {
+            type: Boolean,
+            default: false
         },
 
         document: {
