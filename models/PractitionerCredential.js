@@ -69,7 +69,23 @@ const practitionerCredentialSchema = new mongoose.Schema(
         approved_at: {
             type: Date,
             default: null
-        }
+        },
+        rejected_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+},
+
+rejected_at: {
+    type: Date,
+    default: null
+},
+
+rejection_reason: {
+    type: String,
+    trim: true,
+    default: ""
+}
     },
     {
         timestamps: true

@@ -1444,8 +1444,82 @@ const updateAndApproveCredential = async (req, res) => {
         });
     }
 };
+const rejectCredential = async (req, res) => {
+    try {
+        // Only Super Admin can reject credentials
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can reject credentials"
+            });
+        }
+
+        const { credential_id } = req.params;
+        const { rejection_reason } = req.body;
+
+        // Find credential
+        const credential =
+            await PractitionerCredential.findById(credential_id);
+
+        if (!credential) {
+            return res.status(404).json({
+                success: false,
+                message: "Credential not found"
+            });
+        }
+
+        // Optional: reason required
+        if (!rejection_reason || !rejection_reason.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Rejection reason is required"
+            });
+        }
+
+        // Update rejection details
+        credential.status = "rejected";
+        credential.rejected_by = req.user.id;
+        credential.rejected_at = new Date();
+        credential.rejection_reason = rejection_reason.trim();
+
+        // Clear approval details if previously present
+        credential.approved_by = null;
+        credential.approved_at = null;
+
+        await credential.save();
+
+        // Fetch updated credential
+        const updatedCredential =
+            await PractitionerCredential.findById(credential._id)
+                .populate(
+                    "practitioner_id",
+                    "first_name middle_name last_name email mobile"
+                )
+                .populate(
+                    "uploaded_by",
+                    "first_name middle_name last_name email"
+                )
+                .populate(
+                    "rejected_by",
+                    "first_name middle_name last_name email"
+                );
+
+        return res.status(200).json({
+            success: true,
+            message: "Credential rejected successfully",
+            data: updatedCredential
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
+    rejectCredential,
       login,
       addAdmin,
       addUser,

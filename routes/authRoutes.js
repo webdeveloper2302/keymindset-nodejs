@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const {addCredential,updateAndApproveCredential, uploadCredential,getCredentials,register, login ,savePractitioner,updatePractitionerUrl,
+const {addCredential,rejectCredential,updateAndApproveCredential, uploadCredential,getCredentials,register, login ,savePractitioner,updatePractitionerUrl,
      getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,
      deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,
      listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
@@ -14,6 +14,11 @@ router.post(
     "/add-admin",
     authMiddleware,
     addAdmin
+);
+router.put(
+    "/credentials/:credential_id/reject",
+    authMiddleware,
+    rejectCredential
 );
 router.put(
     "/credentials/:credential_id/update-approve",
