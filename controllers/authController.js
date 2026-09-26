@@ -1358,6 +1358,92 @@ const viewCredential = async (req, res) => {
         });
     }
 };
+
+const updateAndApproveCredential = async (req, res) => {
+    try {
+        // Only Super Admin can approve credentials
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can approve credentials"
+            });
+        }
+
+        const { credential_id } = req.params;
+
+        const {
+            credential_type,
+            credential_name,
+            issuer,
+            issued_at,
+            exclude_from_search
+        } = req.body;
+
+        // Find credential
+        const credential = await PractitionerCredential.findById(
+            credential_id
+        );
+
+        if (!credential) {
+            return res.status(404).json({
+                success: false,
+                message: "Credential not found"
+            });
+        }
+
+        // Validate required fields
+        if (!credential_type || !credential_name) {
+            return res.status(400).json({
+                success: false,
+                message: "Kind and credential name are required"
+            });
+        }
+
+        // Update credential information
+        credential.credential_type = credential_type;
+        credential.credential_name = credential_name;
+        credential.issuer = issuer || "";
+        credential.issued_at = issued_at || null;
+        credential.exclude_from_search =
+            exclude_from_search === true ||
+            exclude_from_search === "true";
+
+        // Approve credential
+        credential.status = "approved";
+        credential.approved_by = req.user.id;
+        credential.approved_at = new Date();
+
+        await credential.save();
+
+        // Get updated data with user details
+        const updatedCredential =
+            await PractitionerCredential.findById(credential._id)
+                .populate(
+                    "practitioner_id",
+                    "first_name middle_name last_name email mobile"
+                )
+                .populate(
+                    "uploaded_by",
+                    "first_name middle_name last_name email"
+                )
+                .populate(
+                    "approved_by",
+                    "first_name middle_name last_name email"
+                );
+
+        return res.status(200).json({
+            success: true,
+            message: "Credential updated and approved successfully",
+            data: updatedCredential
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
       login,
@@ -1378,5 +1464,6 @@ module.exports = {
       addCredential,
       uploadCredential,
       getCredentials,
-      viewCredential
+      viewCredential,
+      updateAndApproveCredential
 };
