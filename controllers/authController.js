@@ -1249,6 +1249,47 @@ const addCredential = async (req, res) => {
         });
     }
 };
+const getCredentials = async (req, res) => {
+    try {
+        const { practitioner_id } = req.params;
+
+        // Check practitioner exists
+        const practitioner = await User.findById(practitioner_id);
+
+        if (!practitioner) {
+            return res.status(404).json({
+                success: false,
+                message: "Practitioner not found"
+            });
+        }
+
+        // Get all credentials
+        const credentials = await PractitionerCredential.find({
+            practitioner_id: practitioner_id
+        })
+            .populate(
+                "uploaded_by",
+                "first_name middle_name last_name email"
+            )
+            .populate(
+                "approved_by",
+                "first_name middle_name last_name email"
+            )
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            message: "Certificates fetched successfully",
+            data: credentials
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
       login,
@@ -1267,5 +1308,6 @@ module.exports = {
       updatePractitionerUrl,
       savePractitioner,
       addCredential,
-      uploadCredential
+      uploadCredential,
+      getCredentials
 };

@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const {addCredential, uploadCredential,register, login ,savePractitioner,updatePractitionerUrl,
+const {addCredential, uploadCredential,getCredentials,register, login ,savePractitioner,updatePractitionerUrl,
      getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,
      deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,
      listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
@@ -16,6 +16,11 @@ router.post(
     addAdmin
 );
 
+router.get(
+    "/practitioners/:practitioner_id/credentials",
+    authMiddleware,
+    getCredentials
+);
 router.post(
     "/practitioners/:practitioner_id/credentials",
     authMiddleware,
