@@ -330,10 +330,14 @@ const addUser = async (req, res) => {
             added_by: req.user.id
         });
 
+        const referCode = `${first_name}${Date.now()}`
+        .replace(/\s+/g, "")
+        .toUpperCase();
+
         const userDetails = await UserDetails.create({
         user_id: admin._id,
         url: slug,
-        refer_code: null,
+        refer_code: referCode,
         refer_by: null
         });
 
