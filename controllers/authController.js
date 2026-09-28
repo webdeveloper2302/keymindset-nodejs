@@ -1595,6 +1595,63 @@ const autoLoginPractitioner = async (req, res) => {
         });
     }
 };
+const listClients = async (req, res) => {
+    try {
+
+        const clients = await Client.find({
+            practitioner_id: req.user.id,
+            status: "active"
+        })
+        .select(
+            "first_name middle_name last_name email mobile card_on_file last_appointment_at status createdAt"
+        )
+        .sort({
+            createdAt: -1
+        });
+
+        const data = clients.map(client => ({
+            id: client._id,
+
+            full_name: [
+                client.first_name,
+                client.middle_name,
+                client.last_name
+            ]
+                .filter(Boolean)
+                .join(" "),
+
+            first_name: client.first_name,
+            middle_name: client.middle_name,
+            last_name: client.last_name,
+
+            email: client.email,
+            mobile: client.mobile,
+
+            card_on_file: client.card_on_file,
+
+            last_appointment: client.last_appointment_at,
+
+            status: client.status,
+
+            created_at: client.createdAt
+        }));
+
+        return res.status(200).json({
+            success: true,
+            message: "Clients fetched successfully",
+            total: data.length,
+            data: data
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+};
 module.exports = {
     register,
     rejectCredential,
@@ -1618,5 +1675,6 @@ module.exports = {
       getCredentials,
       viewCredential,
       updateAndApproveCredential,
-      autoLoginPractitioner
+      autoLoginPractitioner,
+      listClients
 };

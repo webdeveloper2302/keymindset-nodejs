@@ -10,6 +10,11 @@ const path = require("path");
 const app = express();
 
 const cors = require('cors');
+const clientRoutes = require("./routes/clientRoutes");
+
+app.use(express.json());
+
+app.use("/api", clientRoutes);
 
 app.use(
     "/uploads",
@@ -30,7 +35,6 @@ app.use(cors({
 
 connectDB();
 
-app.use(express.json());
 
 app.get("/", (req, res) => {
     res.json({
