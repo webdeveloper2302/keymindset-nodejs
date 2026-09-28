@@ -1517,6 +1517,80 @@ const rejectCredential = async (req, res) => {
         });
     }
 };
+const autoLoginPractitioner = async (req, res) => {
+    try {
+        // Only Super Admin can use auto-login
+        if (req.user.role !== 1) {
+            return res.status(403).json({
+                success: false,
+                message: "Only Super Admin can login as practitioner"
+            });
+        }
+
+        const { practitionerId } = req.params;
+
+        // Find practitioner
+        const practitioner = await User.findOne({
+            _id: practitionerId
+        });
+
+        if (!practitioner) {
+            return res.status(404).json({
+                success: false,
+                message: "Practitioner not found"
+            });
+        }
+
+        // Optional: only allow active practitioners
+        if (practitioner.status !== "active") {
+            return res.status(403).json({
+                success: false,
+                message: "Practitioner account is not active"
+            });
+        }
+
+        // Create practitioner token
+        const token = jwt.sign(
+            {
+                id: practitioner._id,
+                role: practitioner.role,
+
+                // Important: this tells us that
+                // Super Admin logged in as this user
+                impersonated: true,
+                impersonated_by: req.user.id
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Practitioner auto-login successful",
+
+            data: {
+                id: practitioner._id,
+                first_name: practitioner.first_name,
+                middle_name: practitioner.middle_name,
+                last_name: practitioner.last_name,
+                email: practitioner.email,
+                mobile: practitioner.mobile,
+                role: practitioner.role,
+                status: practitioner.status
+            },
+
+            token: token
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     register,
     rejectCredential,
@@ -1539,5 +1613,6 @@ module.exports = {
       uploadCredential,
       getCredentials,
       viewCredential,
-      updateAndApproveCredential
+      updateAndApproveCredential,
+      autoLoginPractitioner
 };

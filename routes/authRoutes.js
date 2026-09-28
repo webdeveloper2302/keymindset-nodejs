@@ -2,11 +2,16 @@ const express = require("express");
 
 const router = express.Router();
 
-const {addCredential,rejectCredential,updateAndApproveCredential, uploadCredential,getCredentials,register, login ,savePractitioner,updatePractitionerUrl,
+const {autoLoginPractitioner,addCredential,rejectCredential,updateAndApproveCredential, uploadCredential,getCredentials,register, login ,savePractitioner,updatePractitionerUrl,
      getUserDetails,activateAdmin,addAdmin,editAdmin, addUser,
      deactivateAdmin, listUsers,rejectAdminRequest, markAdminRequestAsRead,
      listUsers1,getAdminRequests,approveAdminRequest} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
+router.post(
+    "/admin/auto-login/:practitionerId",
+    authMiddleware,
+    autoLoginPractitioner
+);
 
 router.post("/register", register);
 router.post("/login", login);
