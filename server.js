@@ -11,8 +11,11 @@ const app = express();
 
 const cors = require('cors');
 const clientRoutes = require("./routes/clientRoutes");
+const serviceRoutes =
+    require("./routes/serviceRoutes");
 
 app.use(express.json());
+app.use("/api", serviceRoutes);
 
 app.use("/api", clientRoutes);
 
