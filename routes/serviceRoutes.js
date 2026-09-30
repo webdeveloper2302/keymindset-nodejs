@@ -6,7 +6,8 @@ const {
     addService,
     listServices,
     viewService,
-    updateService
+    updateService,
+    deleteService
 } = require("../controllers/serviceController");
 
 const authMiddleware =
@@ -39,7 +40,11 @@ router.get(
     authMiddleware,
     viewService
 );
-
+router.delete(
+    "/services/:id",
+    authMiddleware,
+    deleteService
+);
 
 // Update service
 router.put(

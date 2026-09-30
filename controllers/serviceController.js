@@ -356,9 +356,47 @@ const listServices = async (req, res) => {
         });
     }
 };
+const deleteService = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find service belonging to logged-in practitioner
+        const service = await Service.findOne({
+            _id: id,
+            practitioner_id: req.user.id
+        });
+
+        if (!service) {
+            return res.status(404).json({
+                success: false,
+                message: "Service not found"
+            });
+        }
+
+        // Delete service
+        await Service.deleteOne({
+            _id: id
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Service deleted successfully"
+        });
+
+    } catch (error) {
+
+        console.error("Delete service error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     addService,
     listServices,
     viewService,
-    updateService
+    updateService,
+    deleteService
 };
