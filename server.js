@@ -14,9 +14,11 @@ const clientRoutes = require("./routes/clientRoutes");
 const serviceRoutes =
     require("./routes/serviceRoutes");
 
+const reviewRoutes = require("./routes/reviewRoutes");
+
 app.use(express.json());
 app.use("/api", serviceRoutes);
-
+app.use("/api", reviewRoutes);
 app.use("/api", clientRoutes);
 
 app.use(
