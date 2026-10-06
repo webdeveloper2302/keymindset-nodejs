@@ -12,7 +12,11 @@ router.get(
     authMiddleware,
     reviewController.listReviews
 );
-
+router.get(
+    "/practitioners/:practitioner_id/reviews",
+    authMiddleware,
+    reviewController.getPractitionerReviews
+);
 
 // View single review
 router.get(

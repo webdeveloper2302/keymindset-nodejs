@@ -348,11 +348,55 @@ const deleteReview = async (req, res) => {
         });
     }
 };
+const getPractitionerReviews = async (req, res) => {
+    try {
+        const { practitioner_id } = req.params;
 
+        // Check practitioner exists
+        const practitioner = await User.findById(practitioner_id);
+
+        if (!practitioner) {
+            return res.status(404).json({
+                success: false,
+                message: "Practitioner not found"
+            });
+        }
+
+        const reviews = await Review.find({
+            practitioner_id: practitioner_id
+        })
+          
+            .populate(
+                "created_by",
+                "first_name last_name email role"
+            )
+            .sort({
+                createdAt: -1
+            });
+
+        return res.status(200).json({
+            success: true,
+            message: "Practitioner reviews fetched successfully",
+            practitioner_id: practitioner_id,
+            count: reviews.length,
+            data: reviews
+        });
+
+    } catch (error) {
+
+        console.error("Get practitioner reviews error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 module.exports = {
     addReview,
     listReviews,
     viewReview,
     updateReview,
-    deleteReview
+    deleteReview,
+    getPractitionerReviews
 };
