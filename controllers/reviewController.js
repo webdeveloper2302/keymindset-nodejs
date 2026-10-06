@@ -147,9 +147,6 @@ const listReviews = async (req, res) => {
                 "practitioner_id",
                 "first_name middle_name last_name email"
             )
-            .populate(
-                "name"
-            )
             .sort({
                 createdAt: -1
             });
@@ -186,9 +183,7 @@ const viewReview = async (req, res) => {
                 "practitioner_id",
                 "first_name middle_name last_name email"
             )
-            .populate(
-                "name"
-            )
+          
             .populate(
                 "created_by",
                 "first_name last_name email role"
