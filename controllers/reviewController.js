@@ -15,7 +15,6 @@ const addReview = async (req, res) => {
 
         const {
             practitioner_id,
-            service_id,
             first_name,
             last_name,
             email,
@@ -67,25 +66,10 @@ const addReview = async (req, res) => {
             });
         }
 
-        // Check service if provided
-        if (service_id) {
-
-            const service = await Service.findOne({
-                _id: service_id,
-                practitioner_id: practitioner_id
-            });
-
-            if (!service) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Service not found for this practitioner"
-                });
-            }
-        }
+    
 
         const newReview = await Review.create({
             practitioner_id,
-            service_id: service_id || null,
             first_name,
             last_name,
             email,
@@ -164,7 +148,6 @@ const listReviews = async (req, res) => {
                 "first_name middle_name last_name email"
             )
             .populate(
-                "service_id",
                 "name"
             )
             .sort({
@@ -204,7 +187,6 @@ const viewReview = async (req, res) => {
                 "first_name middle_name last_name email"
             )
             .populate(
-                "service_id",
                 "name"
             )
             .populate(
@@ -248,7 +230,6 @@ const updateReview = async (req, res) => {
 
         const {
             practitioner_id,
-            service_id,
             first_name,
             last_name,
             email,
@@ -294,25 +275,7 @@ const updateReview = async (req, res) => {
             existingReview.practitioner_id = practitioner_id;
         }
 
-        if (service_id !== undefined) {
-
-            if (service_id) {
-
-                const service = await Service.findOne({
-                    _id: service_id,
-                    practitioner_id: existingReview.practitioner_id
-                });
-
-                if (!service) {
-                    return res.status(404).json({
-                        success: false,
-                        message: "Service not found for this practitioner"
-                    });
-                }
-            }
-
-            existingReview.service_id = service_id || null;
-        }
+    
 
         if (first_name !== undefined)
             existingReview.first_name = first_name;

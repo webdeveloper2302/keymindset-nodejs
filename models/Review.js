@@ -8,11 +8,6 @@ const reviewSchema = new mongoose.Schema(
             required: true
         },
 
-        service_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Service",
-            default: null
-        },
 
         first_name: {
             type: String,
