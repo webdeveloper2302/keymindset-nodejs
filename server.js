@@ -11,7 +11,7 @@ const authRoutes = require("./routes/authRoutes");
 const clientRoutes = require("./routes/clientRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
-
+const addOnRoutes = require("./routes/addOnRoutes");
 const app = express();
 
 // 1. CORS configuration - MUST BE BEFORE ALL ROUTES
@@ -48,6 +48,9 @@ app.use("/api", clientRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+
+
+app.use("/api", addOnRoutes);
 
 // 5. Default route
 app.get("/", (req, res) => {
